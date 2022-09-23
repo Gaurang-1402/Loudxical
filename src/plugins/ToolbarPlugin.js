@@ -435,8 +435,31 @@ export default function ToolbarPlugin() {
   const [isCode, setIsCode] = useState(false)
 
   // React speech kit
+  const editorState = editor.getEditorState().toJSON()
+
+  console.log(editorState)
   const { speak, cancel, speaking } = useSpeechSynthesis()
   const [rate, setRate] = useState(1)
+  const handleTTS = () => {
+    const editorState = editor.getEditorState().toJSON()
+
+    let speakStr = ""
+    console.log("TTS", editorState.root.children)
+
+    editorState.root.children.map((childState) => {
+      console.log("TTS child", childState.children)
+      childState.children.map((textState) => {
+        console.log("TTS child text", textState.text)
+        speakStr += textState.text + " "
+      })
+    })
+
+    speak({
+      text: speakStr,
+      rate: rate,
+    })
+  }
+
   //
 
   const updateToolbar = useCallback(() => {
@@ -517,12 +540,6 @@ export default function ToolbarPlugin() {
       )
     )
   }, [editor, updateToolbar])
-
-  const stringifiedEditorState = JSON.stringify(
-    editor.getEditorState().toJSON()
-  )
-
-  console.log(stringifiedEditorState)
 
   const codeLanguges = useMemo(() => getCodeLanguages(), [])
   const onCodeLanguageSelect = useCallback(
@@ -629,12 +646,7 @@ export default function ToolbarPlugin() {
             <button
               className={"toolbar-item spaced "}
               aria-label='Format Bold'
-              onClick={() =>
-                speak({
-                  text: "Testing string",
-                  rate: rate,
-                })
-              }
+              onClick={handleTTS}
             >
               Press to hear
             </button>
