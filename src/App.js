@@ -1,4 +1,5 @@
 import Editor from "./Editor"
+import MultiVoiceTest from "./MultiVoiceTest"
 import "./styles.css"
 
 function App() {
