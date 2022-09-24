@@ -1,5 +1,9 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import {ReactComponent as TTSLogo} from '../ttslogo.svg'
+import {ReactComponent as StopLogo} from '../stop.svg'
+
+
 import {
   CAN_REDO_COMMAND,
   CAN_UNDO_COMMAND,
@@ -640,7 +644,8 @@ export default function ToolbarPlugin() {
               aria-label='Format Bold'
               onClick={cancel}
             >
-              Stop
+              <StopLogo width="2rem"/>
+
             </button>
           ) : (
             <button
@@ -648,7 +653,8 @@ export default function ToolbarPlugin() {
               aria-label='Format Bold'
               onClick={handleTTS}
             >
-              Press to hear
+              <TTSLogo width="2rem"/>
+              
             </button>
           )}
           {/* <button
@@ -657,21 +663,33 @@ export default function ToolbarPlugin() {
           >
             Speak out loud
           </button> */}
+      
           <div className='flex pl-5 m-auto'>
-            <div className=''>
+            <div className='rate'>
               <label
+                htmlFor='rate'
+                className='font-bold leading-tight text-small'
+              >
+                Speed: {rate}x
+                
+              </label>
+              </div>
+          </div>
+          <div className='flex pl-5 m-auto'>
+            <div className='rate-slider'>
+              {/* <label
                 htmlFor='rate'
                 className='font-bold leading-tight text-medium'
               >
                 Rate: {rate}
-              </label>
-
+                
+              </label> */}
               <input
                 className=''
                 type='range'
                 min='0.5'
                 max='2'
-                defaultValue='1'
+                defaultValue='1.0'
                 step='0.1'
                 id='rate'
                 onChange={(event) => {
@@ -680,6 +698,7 @@ export default function ToolbarPlugin() {
               />
             </div>
           </div>
+
           <button
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")
