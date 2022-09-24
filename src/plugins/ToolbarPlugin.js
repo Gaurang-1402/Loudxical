@@ -1,8 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import {ReactComponent as TTSLogo} from '../ttslogo.svg'
-import {ReactComponent as StopLogo} from '../stop.svg'
-
+import { ReactComponent as TTSLogo } from "../ttslogo.svg"
+import { ReactComponent as StopLogo } from "../stop.svg"
 
 import {
   CAN_REDO_COMMAND,
@@ -438,22 +437,69 @@ export default function ToolbarPlugin() {
   const [isStrikethrough, setIsStrikethrough] = useState(false)
   const [isCode, setIsCode] = useState(false)
 
+  const [showVoiceOptionsDropDown, setShowVoiceOptionsDropDown] =
+    useState(false)
+  const dropDownRef = useRef(null)
+
+  const voiceDropDownRef = useRef(null)
+  useEffect(() => {
+    const toolbar = toolbarRef.current
+    const voiceDropDown = voiceDropDownRef.current
+
+    console.log(voiceDropDown, toolbar)
+
+    if (toolbar !== null && voiceDropDown !== null) {
+      const { top, left } = toolbar.getBoundingClientRect()
+      voiceDropDown.style.top = `${top + 40}px`
+      voiceDropDown.style.left = `${left}px`
+      console.log(
+        "top",
+        voiceDropDown.style.top,
+        "left",
+        voiceDropDown.style.left
+      )
+    }
+  }, [voiceDropDownRef, toolbarRef])
+
+  useEffect(() => {
+    const dropDown = dropDownRef.current
+    const toolbar = toolbarRef.current
+
+    if (dropDown !== null && toolbar !== null) {
+      const handle = (event) => {
+        const target = event.target
+
+        if (!dropDown.contains(target) && !toolbar.contains(target)) {
+          setShowBlockOptionsDropDown(false)
+        }
+      }
+      document.addEventListener("click", handle)
+
+      return () => {
+        document.removeEventListener("click", handle)
+      }
+    }
+  }, [dropDownRef, setShowBlockOptionsDropDown, toolbarRef])
+
   // React speech kit
   const editorState = editor.getEditorState().toJSON()
 
-  console.log(editorState)
-  const { speak, cancel, speaking } = useSpeechSynthesis()
+  // console.log(editorState)
+  const { speak, cancel, speaking, voices } = useSpeechSynthesis()
+
+  const [currentVoice, setCurrentVoice] = useState(voices[0])
+
   const [rate, setRate] = useState(1)
   const handleTTS = () => {
     const editorState = editor.getEditorState().toJSON()
 
     let speakStr = ""
-    console.log("TTS", editorState.root.children)
+    // console.log("TTS", editorState.root.children)
 
     editorState.root.children.map((childState) => {
-      console.log("TTS child", childState.children)
+      // console.log("TTS child", childState.children)
       childState.children.map((textState) => {
-        console.log("TTS child text", textState.text)
+        // console.log("TTS child text", textState.text)
         speakStr += textState.text + " "
       })
     })
@@ -461,6 +507,7 @@ export default function ToolbarPlugin() {
     speak({
       text: speakStr,
       rate: rate,
+      voice: currentVoice,
     })
   }
 
@@ -604,6 +651,36 @@ export default function ToolbarPlugin() {
             <span className='text'>{blockTypeToBlockName[blockType]}</span>
             <i className='chevron-down' />
           </button>
+
+          <button
+            className='toolbar-item block-controls'
+            onClick={() =>
+              setShowVoiceOptionsDropDown(!showVoiceOptionsDropDown)
+            }
+            aria-label='Formatting Options'
+          >
+            Voice options <i className='chevron-down' />
+          </button>
+
+          {showVoiceOptionsDropDown && (
+            <div className='dropdown' ref={voiceDropDownRef}>
+              {voices.map((voice) => (
+                <button
+                  key={voice.name}
+                  onClick={() => {
+                    setCurrentVoice(voice)
+                    setShowVoiceOptionsDropDown(!showVoiceOptionsDropDown)
+                  }}
+                  className='item'
+                >
+                  {/* TODO: change icon */}
+                  {/* <span className='icon paragraph' /> */}
+                  <span className='text'>{voice.name}</span>
+                  <span className='active' />
+                </button>
+              ))}
+            </div>
+          )}
           {showBlockOptionsDropDown &&
             createPortal(
               <BlockOptionsDropdownList
@@ -644,8 +721,7 @@ export default function ToolbarPlugin() {
               aria-label='Format Bold'
               onClick={cancel}
             >
-              <StopLogo width="2rem"/>
-
+              <StopLogo width='2rem' />
             </button>
           ) : (
             <button
@@ -653,8 +729,7 @@ export default function ToolbarPlugin() {
               aria-label='Format Bold'
               onClick={handleTTS}
             >
-              <TTSLogo width="2rem"/>
-              
+              <TTSLogo width='2rem' />
             </button>
           )}
           {/* <button
@@ -663,7 +738,6 @@ export default function ToolbarPlugin() {
           >
             Speak out loud
           </button> */}
-      
           <div className='flex pl-5 m-auto'>
             <div className='rate'>
               <label
@@ -671,9 +745,8 @@ export default function ToolbarPlugin() {
                 className='font-bold leading-tight text-small'
               >
                 Speed: {rate}x
-                
               </label>
-              </div>
+            </div>
           </div>
           <div className='flex pl-5 m-auto'>
             <div className='rate-slider'>
@@ -698,7 +771,6 @@ export default function ToolbarPlugin() {
               />
             </div>
           </div>
-
           <button
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")
