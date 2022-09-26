@@ -538,7 +538,7 @@ export default function ToolbarPlugin() {
       pauseTTS()
     }
 
-    if (textTTS.length==0){
+    if (textTTS.length===0){
       skimEditor()
     }
 

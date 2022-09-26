@@ -6,7 +6,7 @@ function App() {
   return (
     <div className='App'>
     <div className="logo-head">
-    <img src={require('./loud.png')} />
+    <img src={require('./loud.png')} alt="Loudxical" />
     </div>
       <Editor />
     </div>
