@@ -5,7 +5,9 @@ import "./styles.css"
 function App() {
   return (
     <div className='App'>
-      <h1>Loudsical</h1>
+    <div className="logo-head">
+    <img src={require('./loud.png')} alt="Loudxical" />
+    </div>
       <Editor />
     </div>
   )
