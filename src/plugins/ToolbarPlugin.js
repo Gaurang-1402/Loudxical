@@ -2,6 +2,8 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ReactComponent as TTSLogo } from "../ttslogo.svg"
 import { ReactComponent as StopLogo } from "../stop.svg"
+import { ReactComponent as PauseLogo } from "../pause.svg"
+import { ReactComponent as ResetLogo } from "../reset.svg"
 
 import {
   CAN_REDO_COMMAND,
@@ -484,13 +486,28 @@ export default function ToolbarPlugin() {
   // React speech kit
   const editorState = editor.getEditorState().toJSON()
 
+  const [textTTS, setTextTTS] = useState('');
+
+  const [timeSet, setTimeSet] = useState(0);
+  const [pauseTime, setPauseTime] = useState(0);
+
+
+  const onEnd = () => {
+    //add highlighted text here
+  };
   // console.log(editorState)
-  const { speak, cancel, speaking, voices } = useSpeechSynthesis()
+  const { speak, cancel, speaking, voices } = useSpeechSynthesis({
+    onEnd
+  });
 
   const [currentVoice, setCurrentVoice] = useState(voices[0])
 
   const [rate, setRate] = useState(1)
-  const handleTTS = () => {
+
+
+  //textTTS.substring(int(rate*10*time))
+
+  const skimEditor = () => {
     const editorState = editor.getEditorState().toJSON()
 
     let speakStr = ""
@@ -504,13 +521,53 @@ export default function ToolbarPlugin() {
       })
     })
 
+    setTextTTS(speakStr)
+
+  }
+
+  const resetTTS = () => {
+    cancel()
+    setRate(1)
+    skimEditor()
+
+  }
+
+  const handleTTS = () => {
+
+    if (pauseTime<timeSet){
+      pauseTTS()
+    }
+
+    if (textTTS.length==0){
+      skimEditor()
+    }
+
     speak({
-      text: speakStr,
+      text: textTTS,
       rate: rate,
       voice: currentVoice,
     })
+    const time = new Date().getTime() / 1000
+    setTimeSet(time)
   }
 
+  
+  const pauseTTS = () => {
+
+    cancel()
+
+    const prevTime = timeSet
+    setPauseTime(new Date().getTime() / 1000)
+    const diff = new Date().getTime() / 1000 - prevTime
+    const cutoff = parseInt(10*diff*rate)
+
+    if (cutoff>textTTS.length){
+      skimEditor()
+    }
+    else {
+      setTextTTS(textTTS.substring(cutoff))
+    }
+  }
   //
 
   const updateToolbar = useCallback(() => {
@@ -659,11 +716,16 @@ export default function ToolbarPlugin() {
             }
             aria-label='Formatting Options'
           >
-            Voice options <i className='chevron-down' />
+            <div className="speaker">
+
+            Speaker 
+            </div>
+
+          <i className='chevron-down' />
           </button>
 
           {showVoiceOptionsDropDown && (
-            <div className='dropdown' ref={voiceDropDownRef}>
+            <div className='dropdown-new' ref={voiceDropDownRef}>
               {voices.map((voice) => (
                 <button
                   key={voice.name}
@@ -706,30 +768,22 @@ export default function ToolbarPlugin() {
         </>
       ) : (
         <>
-          <button
-            onClick={() => {
-              editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")
-            }}
-            className={"toolbar-item spaced " + (isBold ? "active" : "")}
-            aria-label='Format Bold'
-          >
-            <i className='format bold' />
-          </button>
+          
           {speaking ? (
             <button
               className={"toolbar-item spaced "}
               aria-label='Format Bold'
-              onClick={cancel}
+              onClick={pauseTTS}
             >
-              <StopLogo width='2rem' />
+              <PauseLogo width='2rem' />
             </button>
           ) : (
             <button
-              className={"toolbar-item spaced "}
+              className={"toolbar-item"}
               aria-label='Format Bold'
               onClick={handleTTS}
             >
-              <TTSLogo width='2rem' />
+              <TTSLogo width='1.9rem' />
             </button>
           )}
           {/* <button
@@ -744,7 +798,7 @@ export default function ToolbarPlugin() {
                 htmlFor='rate'
                 className='font-bold leading-tight text-small'
               >
-                Speed: {rate}x
+                {rate}x
               </label>
             </div>
           </div>
@@ -771,6 +825,29 @@ export default function ToolbarPlugin() {
               />
             </div>
           </div>
+
+          <div className="reset-button">
+          <button
+              className={"toolbar-item spaced "}
+              aria-label='Format Bold'
+              onClick={resetTTS}
+            >
+            
+              Reset
+            </button>
+          </div>
+          <Divider />
+
+          <button
+            onClick={() => {
+              editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")
+            }}
+            className={"toolbar-item spaced " + (isBold ? "active" : "")}
+            aria-label='Format Bold'
+          >
+            <i className='format bold' />
+          </button>
+
           <button
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")
